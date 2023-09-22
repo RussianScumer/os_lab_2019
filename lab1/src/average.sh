@@ -1,13 +1,29 @@
 #!/bin/bash
 
-summ = $0
-count = $0
-for arg in "$@"; do 
-   summ = $(( summ + arg ))
-    count = $((count + 1))
-done
+if [ $# -eq 0 ]; then
+  echo "Usage: $0 <input_file>"
+  exit 1
+fi
 
-avg = $((summ / count))
+input_file="$1"
 
-echo $count
-echo $avg
+if [ ! -f "$input_file" ]; then
+  echo "File $input_file not found."
+  exit 1
+fi
+
+# Считываем числа из файла и вычисляем сумму и количество чисел
+sum=0
+count=0
+
+while IFS= read -r line; do
+  sum=$((sum + line))
+  count=$((count + 1))
+done < "$input_file"
+
+# Вычисляем среднее арифметическое
+average=$(bc -l <<< "scale=2; $sum / $count")
+
+# Выводим результат
+echo "Количество чисел: $count"
+echo "Среднее арифметическое: $average"
