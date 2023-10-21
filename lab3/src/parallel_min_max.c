@@ -15,11 +15,15 @@
 #include "find_min_max.h"
 #include "utils.h"
 
+pid_t* child_pids;
+int pnum = -1;
+
+
+
 int main(int argc, char **argv)
 {
   int seed = -1;
   int array_size = -1;
-  int pnum = -1;
   bool with_files = false;
   int timeout = 0;
   while (true)
@@ -114,7 +118,6 @@ int main(int argc, char **argv)
 
   struct timeval start_time;
   gettimeofday(&start_time, NULL);
-
   int **pipes = malloc(sizeof(int *) * pnum);
   for (int i = 0; i < pnum; i++)
   {
@@ -194,6 +197,13 @@ int main(int argc, char **argv)
         return 1;
       }
     }
+    
+    while (active_child_processes > 0)
+    {
+      int status;
+      wait(&status);
+      active_child_processes -= 1;
+    }
     if (timeout > 0) {
         pid_t parent_pid = getpid();
         pid_t kill_pid = fork();
@@ -202,12 +212,6 @@ int main(int argc, char **argv)
             kill(parent_pid, SIGKILL);
             exit(0);
         }
-    }
-    while (active_child_processes > 0)
-    {
-      int status;
-      wait(&status);
-      active_child_processes -= 1;
     }
 
     struct MinMax min_max;
