@@ -11,7 +11,7 @@
 #include <sys/wait.h>
 
 #include <getopt.h>
-
+#include <signal.h>
 #include "find_min_max.h"
 #include "utils.h"
 
@@ -21,7 +21,7 @@ int main(int argc, char **argv)
   int array_size = -1;
   int pnum = -1;
   bool with_files = false;
-
+  int timeout = 0;
   while (true)
   {
     int current_optind = optind ? optind : 1;
@@ -30,11 +30,12 @@ int main(int argc, char **argv)
                                       {"array_size", required_argument, 0, 0},
                                       {"pnum", required_argument, 0, 0},
                                       {"by_files", no_argument, 0, 'f'},
-                                      {0, 0, 0, 0}};
+                                      {"timeout", required_argument, 0, 't'},
+                                      {0, 0, 0, 0, 0}};
 
     int option_index = 0;
     int c = getopt_long(argc, argv, "f", options, &option_index);
-
+    
     if (c == -1)
       break;
 
@@ -69,6 +70,13 @@ int main(int argc, char **argv)
       case 3:
         with_files = true;
         break;
+      case 't':
+            timeout = atoi(optarg);
+            if (timeout < 0) {
+                printf("timeout is a positive number\n");
+                return 1;
+            }
+            break;
 
       defalut:
         printf("Index %d is out of options\n", option_index);
@@ -186,7 +194,15 @@ int main(int argc, char **argv)
         return 1;
       }
     }
-
+    if (timeout > 0) {
+        pid_t parent_pid = getpid();
+        pid_t kill_pid = fork();
+        if (kill_pid == 0) {
+            sleep(timeout);
+            kill(parent_pid, SIGKILL);
+            exit(0);
+        }
+    }
     while (active_child_processes > 0)
     {
       int status;
