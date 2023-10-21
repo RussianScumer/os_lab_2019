@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include <pthread.h>
+#include "utils.h"
 
 struct SumArgs {
   int *array;
